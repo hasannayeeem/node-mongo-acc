@@ -1,33 +1,40 @@
+//dependencies
 const express = require("express");
 const cors = require("cors");
-const dbConnect = require("./utils/dbConnect");
-require("dotenv").configure;
-const userInfo = require("./data.json");
-const usersRoutes = require("./routes/v1/users.route");
-const fs = require("fs");
+const { errorHandler } = require("./middlewares/errorHandler");
+const usersRoutes = require("./routes/usersRoutes/users.routes");
 
+//app config
 const app = express();
-const PORT = 5000;
+const port = process.env.PORT || 5000;
 
-// middleware
+//middlewares
 app.use(cors());
 app.use(express.json());
 
-// database connection
-dbConnect();
+//handle application errors
+app.use(errorHandler)
 
-// Api
-// get all user api
-app.use("/api/v1", usersRoutes);
+app.get("/", (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: "Welcome to Random User Api",
+    });
+})
 
-// add new user api
-app.use("/api/v1", usersRoutes);
+// dynamic api routes
+app.use("/api/v1", usersRoutes );
 
-// not found
-app.all("*", (req, res) => {
-  res.send("Not Found!");
-});
+//create server
+app.listen(port, () => console.log(`Listening on Port: ${port}`));
 
-app.listen(PORT, () => {
-  console.log(`App is running on ${PORT}`);
+// handle unhandled promise rejections
+process.on("unhandledRejection", (err, promise) => {
+  console.log({
+    name: err.name,
+    message: err.message,
+    stack: err.stack,
+  });
+  // close server & exit process
+  app.close(() => process.exit(1));
 });
